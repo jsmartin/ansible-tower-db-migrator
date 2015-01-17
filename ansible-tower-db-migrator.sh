@@ -10,14 +10,14 @@ DB_CONFIG="/etc/tower/conf.d/postgres.py"
 echo ""
 
 if [ ! -w $DB_CONFIG ]; then
-	echo "You must run the script with a user who has write permission to"
-	echo $DB_CONFIG
-	echo ""
+    echo "You must run the script with a user who has write permission to"
+    echo $DB_CONFIG
+    echo ""
 fi
 
 if [ ! -d /etc/tower ];then
-	echo "No Tower installation found."
-	exit 1
+    echo "No Tower installation found."
+    exit 1
 fi
 
 # ensure connection/access to remote instance
@@ -32,8 +32,8 @@ echo "Dumping the current database to /var/lib/awx/db-migrate.sql"
 PGPASSWORD=$db_password pg_dump -U awx awx  -f /tmp/db.sql --no-acl --no-owner 
 
 if [ $? != 0 ]; then
-	echo "There was a problem exporting the database."
-	exit 1
+    echo "There was a problem exporting the database."
+    exit 1
 fi
 
 
@@ -52,8 +52,8 @@ echo "Now going to import the database to the new location"
 PGPASSWORD=$NEW_DB_ADMIN_PW psql  -h $NEW_DB_HOST -U $NEW_DB_ADMIN_USER awx < /tmp/db.sql
 
 if [ $? != 0 ]; then
-	echo "There was a problem importing the database."
-	exit 1
+    echo "There was a problem importing the database."
+    exit 1
 fi
 
  #modifying the owner of the tables to the awx user, the postgres super user role on RDS is not
