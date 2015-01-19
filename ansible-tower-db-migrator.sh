@@ -1,4 +1,4 @@
-#! /bin/bash -ex
+#! /bin/bash -e
 
 vercomp () {
     if [[ $1 == $2 ]]
@@ -53,7 +53,7 @@ python  -c "import sys; execfile(\"$DB_CONFIG\"); print DATABASES[\"default\"][\
 
 
 detectOSfamily() {
-  DISTRIBID=$(cat /etc/lsb-release | grep DISTRIB_ID | sed s/\=/\ /g | awk '{print $2}')
+  DISTRIBID=$(ansible -m setup localhost|grep ansible_os_family|cut -f2 -d':'|tr -d '"'|tr -d ','|tr -d ' ')
 }
 
 detectOldSettings() {
@@ -246,7 +246,7 @@ fi
 
 # stop all services but DB
 ansible localhost -m service -a "name=redis state=stopped" --connection=local -s
-if [[ $DISTRIBID == "Ubuntu" ]]
+if [[ $DISTRIBID == "Debian" ]]
 then
   ansible localhost -m service -a "name=apache2 state=stopped" --connection=local -s
   ansible localhost -m service -a "name=supervisor state=stopped" --connection=local -s
@@ -275,7 +275,7 @@ ansible localhost -m postgresql_user -a "name=$NEW_AWX_DB_USER password=$NEW_AWX
 
 
 echo "Now going to import the database to the new location"
-PGPASSWORD=$NEW_DB_ADMIN_PW psql  -h $NEW_DB_HOST -p $NEW_DB_HOST_PORT -U $NEW_DB_ADMIN_USER $NEW_AWX_DB_NAME < $DB_DUMP_FILE
+PGPASSWORD=$NEW_DB_ADMIN_PW psql  -h $NEW_DB_HOST -p $NEW_DB_HOST_PORT -U $NEW_DB_ADMIN_USER $NEW_AWX_DB_NAME -f $DB_DUMP_FILE
 
 if [ $? != 0 ]; then
     echo "There was a problem importing the database."
