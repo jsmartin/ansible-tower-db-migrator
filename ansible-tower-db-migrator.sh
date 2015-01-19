@@ -29,19 +29,19 @@ OLD_DB_HOST_PORT=$(grep PORT $DB_CONFIG | cut -f2 -d':'| tr -d ' '|sed 's/,//g')
 promptOldSettings() {
 
 if [ ! -n "$OLD_DB_HOST" ]; then
-OLD_DB_HOST=$(promptValue "Enter old DB host")
+    read -p "Enter old DB host: " OLD_DB_HOST
 fi
 
 if [ ! -n "$OLD_DB_HOST_PORT" ]; then
-OLD_DB_HOST_PORT=$(promptValue "Enter old DB host port")
+    read -p "Enter OLD DB host port: " -e -i 5432 OLD_DB_HOST_PORT
 fi
 
 if [ ! -n "$OLD_AWX_DB_NAME" ]; then
-OLD_AWX_DB_NAME=$(promptValue "Enter old Tower DB name")
+    read -p "Enter old Tower DB name: " OLD_AWX_DB_NAME
 fi
 
 if [ ! -n "$OLD_AWX_DB_USER" ]; then
-OLD_AWX_DB_USER=$(promptValue "Enter old Tower DB user")
+    read -p "Enter old Tower DB user: " OLD_AWX_DB_USER
 fi
 
 if [ ! -n "$OLD_AWX_DB_PW" ]; then
@@ -63,19 +63,19 @@ fi
 
 promptNewSettings() {
  if [ ! -n "$NEW_DB_HOST" ]; then
-   NEW_DB_HOST=$(promptValue "Enter new DB host")
+    read -p "Enter new DB host: " NEW_DB_HOST
  fi
 
  if [ ! -n "$NEW_DB_HOST_PORT" ]; then
-   NEW_DB_HOST_PORT=$(promptValue "Enter new DB host port")
+   read -p "Enter NEW DB host port: " -e -i 5432 NEW_DB_HOST_PORT
  fi
 
  if [ ! -n "$NEW_AWX_DB_NAME" ]; then
-   NEW_AWX_DB_NAME=$(promptValue "Enter new Tower DB name")
+   read -p "Enter new Tower DB name: " NEW_AWX_DB_NAME
  fi
 
  if [ ! -n "$NEW_AWX_DB_USER" ]; then
-   NEW_AWX_DB_USER=$(promptValue "Enter new Tower DB user")
+   read -p "Enter new Tower DB user: " NEW_AWX_DB_USER
  fi
 
 
@@ -94,7 +94,7 @@ promptNewSettings() {
 
 
  if [ ! -n "$NEW_DB_ADMIN_USER" ]; then
-   NEW_DB_ADMIN_USER=$(promptValue "Enter new DB admin user")
+   read -p "Enter new DB admin user: " NEW_DB_ADMIN_USER
  fi
 
  if [ ! -n "$NEW_DB_ADMIN_PW" ]; then
