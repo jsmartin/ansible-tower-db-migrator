@@ -28,23 +28,23 @@ OLD_DB_HOST_PORT=$(grep PORT $DB_CONFIG | cut -f2 -d':'| tr -d ' '|sed 's/,//g')
 
 promptOldSettings() {
 
-if [ -z "$OLD_DB_HOST" ]; then
+if [ ! -n "$OLD_DB_HOST" ]; then
 OLD_DB_HOST=$(promptValue "Enter old DB host")
 fi
 
-if [ -z "$OLD_DB_HOST_PORT" ]; then
+if [ ! -n "$OLD_DB_HOST_PORT" ]; then
 OLD_DB_HOST_PORT=$(promptValue "Enter old DB host port")
 fi
 
-if [ -z "$OLD_AWX_DB_NAME" ]; then
+if [ ! -n "$OLD_AWX_DB_NAME" ]; then
 OLD_AWX_DB_NAME=$(promptValue "Enter old Tower DB name")
 fi
 
-if [ -z "$OLD_AWX_DB_USER" ]; then
+if [ ! -n "$OLD_AWX_DB_USER" ]; then
 OLD_AWX_DB_USER=$(promptValue "Enter old Tower DB user")
 fi
 
-if [ -z "$OLD_AWX_DB_PW" ]; then
+if [ ! -n "$OLD_AWX_DB_PW" ]; then
     while true
         do
             read -s -p "Enter old AWX DB user password: " password
@@ -62,24 +62,24 @@ fi
 
 
 promptNewSettings() {
- if [ -z "$NEW_DB_HOST" ]; then
+ if [ ! -n "$NEW_DB_HOST" ]; then
    NEW_DB_HOST=$(promptValue "Enter new DB host")
  fi
 
- if [ -z "$NEW_DB_HOST_PORT" ]; then
+ if [ ! -n "$NEW_DB_HOST_PORT" ]; then
    NEW_DB_HOST_PORT=$(promptValue "Enter new DB host port")
  fi
 
- if [ -z "$NEW_AWX_DB_NAME" ]; then
+ if [ ! -n "$NEW_AWX_DB_NAME" ]; then
    NEW_AWX_DB_NAME=$(promptValue "Enter new Tower DB name")
  fi
 
- if [ -z "$NEW_AWX_DB_USER" ]; then
+ if [ ! -n "$NEW_AWX_DB_USER" ]; then
    NEW_AWX_DB_USER=$(promptValue "Enter new Tower DB user")
  fi
 
 
- if [ -z "$NEW_AWX_DB_PW" ]; then
+ if [ ! -n "$NEW_AWX_DB_PW" ]; then
     while true
     do
         read -s -p "Enter new AWX DB user password: " password
@@ -93,11 +93,11 @@ promptNewSettings() {
  fi
 
 
- if [ -z "$NEW_DB_ADMIN_USER" ]; then
+ if [ ! -n "$NEW_DB_ADMIN_USER" ]; then
    NEW_DB_ADMIN_USER=$(promptValue "Enter new DB admin user")
  fi
 
- if [ -z "$NEW_DB_ADMIN_PW" ]; then
+ if [ ! -n "$NEW_DB_ADMIN_PW" ]; then
     while true
     do
         read -s -p "Enter new DB admin user password: " password
@@ -134,7 +134,7 @@ fi
 }
 
 #optinally load a settings file that contains new and old db parameters
-if [ ! -z "$1" ] && [ -r "$1" ]; then
+if [ ! ! -n "$1" ] && [ -r "$1" ]; then
         source $1
 fi
 
