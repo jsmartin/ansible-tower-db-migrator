@@ -6,6 +6,9 @@ promptValue() {
  echo $val
 }
 
+detectOSfamily() {
+  DISTRIBID=$(cat /etc/lsb-release | grep DISTRIB_ID | sed s/\=/\ /g | awk '{print $2}')
+}
 
 detectOldSettings() {
 
@@ -147,6 +150,7 @@ DB_CONFIG="/etc/tower/conf.d/postgres.py"
 echo ""
 detectRequirements
 promptNewSettings
+detectOSfamily
 
 
 # make sure Tower 2.1 or greater
@@ -174,8 +178,14 @@ fi
 
 # stop all services but DB
 ansible localhost -m service -a "name=redis state=stopped" --connection=local -s
-ansible localhost -m service -a "name=httpd state=stopped" --connection=local -s
-ansible localhost -m service -a "name=supervisord state=stopped" --connection=local -s
+if [[ $DISTRIBID == "Ubuntu" ]]
+then
+  ansible localhost -m service -a "name=apache2 state=stopped" --connection=local -s
+  ansible localhost -m service -a "name=supervisor state=stopped" --connection=local -s
+else
+ ansible localhost -m service -a "name=httpd state=stopped" --connection=local -s
+ ansible localhost -m service -a "name=supervisord state=stopped" --connection=local -s
+fi
 
 
 
