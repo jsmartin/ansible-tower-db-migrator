@@ -1,5 +1,8 @@
-#! /bin/bash -e
+#! /bin/bash -ex
 
+fetchPyValue () {
+python  -c "import sys; execfile(\"$DB_CONFIG\"); print DATABASES[\"default\"][\"$1\"]"
+}
 
 promptValue() {
  read -p "$1"": " val
@@ -13,19 +16,20 @@ detectOSfamily() {
 detectOldSettings() {
 
 # get current db name
-OLD_AWX_DB_NAME=$(grep -m1 NAME $DB_CONFIG | awk -F\' '{print $4}')
+#OLD_AWX_DB_NAME=$(grep -m1 NAME $DB_CONFIG | awk -F\' '{print $4}')
+OLD_AWX_DB_NAME=$(fetchPyValue NAME)
 
 # get the current db password
-OLD_AWX_DB_PW=$(grep PASSWORD $DB_CONFIG | awk -F'"""' '{print $2}' )
+OLD_AWX_DB_PW=$(fetchPyValue PASSWORD)
 
 # get the current db user
-OLD_AWX_DB_USER=$(grep USER $DB_CONFIG |  awk -F\' '{print $4}')
+OLD_AWX_DB_USER=$(fetchPyValue USER)
 
 # get the current db host
-OLD_DB_HOST=$(grep HOST $DB_CONFIG |  awk -F\' '{print $4}')
+OLD_DB_HOST=$(fetchPyValue HOST)
 
 # get the current db port
-OLD_DB_HOST_PORT=$(grep PORT $DB_CONFIG | cut -f2 -d':'| tr -d ' '|sed 's/,//g')
+OLD_DB_HOST_PORT=$(fetchPyValue PORT)
 
 }
 
