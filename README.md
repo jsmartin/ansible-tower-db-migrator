@@ -6,6 +6,7 @@ This script is designed to help you migrate your Ansible Tower database from one
 ## Requirements
 
 You must download this script and run it from your Ansible Tower server.
+
 **Please backup your Ansible Tower postgres database before performing this operation.**
 
 ## Flow
