@@ -1,13 +1,56 @@
 #! /bin/bash -ex
 
+vercomp () {
+    if [[ $1 == $2 ]]
+    then
+        return 0
+    fi
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    # fill empty fields in ver1 with zeros
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++))
+    do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++))
+    do
+        if [[ -z ${ver2[i]} ]]
+        then
+            # fill empty fields in ver2 with zeros
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} > 10#${ver2[i]}))
+        then
+            return 1
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]}))
+        then
+            return 2
+        fi
+    done
+    return 0
+}
+
+testvercomp () {
+    vercomp $1 $2
+    case $? in
+        0) op='=';;
+        1) op='>';;
+        2) op='<';;
+    esac
+    if [[ $op != $3 ]]
+    then
+        echo "FAIL: Expected '$3', Actual '$op', Arg1 '$1', Arg2 '$2'"
+    else
+        echo "Pass: '$1 $op $2'"
+    fi
+}
+
 fetchPyValue () {
 python  -c "import sys; execfile(\"$DB_CONFIG\"); print DATABASES[\"default\"][\"$1\"]"
 }
 
-promptValue() {
- read -p "$1"": " val
- echo $val
-}
+
 
 detectOSfamily() {
   DISTRIBID=$(cat /etc/lsb-release | grep DISTRIB_ID | sed s/\=/\ /g | awk '{print $2}')
@@ -141,15 +184,19 @@ fi
 }
 
 #optinally load a settings file that contains new and old db parameters
-if [ ! ! -n "$1" ] && [ -r "$1" ]; then
+if [  -n "$1" ] && [ -r "$1" ]; then
         source $1
 fi
 
 
-
 ### Begin 
+if [ -z "$DB_CONFIG"]; then
+    DB_CONFIG="/etc/tower/conf.d/postgres.py"
+fi
 
-DB_CONFIG="/etc/tower/conf.d/postgres.py"
+if [ -z "$DB_DUMP_FILE"]; then
+    DB_DUMP_FILE="$HOME/ansible-tower-db-migrate.sql"
+fi
 
 echo ""
 detectRequirements
@@ -158,6 +205,23 @@ detectOSfamily
 
 
 # make sure Tower 2.1 or greater
+
+if [ -x $(which tower-manage) ]; then
+    T_MANAGE=$(which tower-manage)
+else
+    echo "Could not find tower-manage"
+    exit 1
+fi
+
+TOWER_VERSION=$($T_MANAGE version)
+
+CMP=$(printf "2.1.0\n$TOWER_VERSION" | sort --version-sort|head -1)
+
+if [ "$CMP" != "2.1.0" ]; then
+    echo "Ansible Tower version must be >= 2.1.0"
+fi
+
+
 
 echo "create awx database on the remote side"
 ansible localhost -m postgresql_db -a "name=$NEW_AWX_DB_NAME port=$NEW_DB_HOST_PORT login_user=$NEW_DB_ADMIN_USER login_password=$NEW_DB_ADMIN_PW login_host=$NEW_DB_HOST" --connection=local
@@ -194,8 +258,8 @@ fi
 
 
 # dump the current database, could alternately write to .pgpass of operating user
-echo "Dumping the current database to /var/lib/awx/db-migrate.sql"
-PGPASSWORD=$OLD_AWX_DB_PW pg_dump -h "$OLD_DB_HOST" -p $OLD_DB_HOST_PORT -U $OLD_AWX_DB_USER $OLD_AWX_DB_NAME  -f /tmp/db.sql --no-acl --no-owner 
+echo "Dumping the current database to $DB_DUMP_FILE"
+PGPASSWORD=$OLD_AWX_DB_PW pg_dump -h "$OLD_DB_HOST" -p $OLD_DB_HOST_PORT -U $OLD_AWX_DB_USER $OLD_AWX_DB_NAME  -f $DB_DUMP_FILE --no-acl --no-owner 
 
 if [ $? != 0 ]; then
     echo "There was a problem dumping the database."
@@ -211,7 +275,7 @@ ansible localhost -m postgresql_user -a "name=$NEW_AWX_DB_USER password=$NEW_AWX
 
 
 echo "Now going to import the database to the new location"
-PGPASSWORD=$NEW_DB_ADMIN_PW psql  -h $NEW_DB_HOST -p $NEW_DB_HOST_PORT -U $NEW_DB_ADMIN_USER $NEW_AWX_DB_NAME < /tmp/db.sql
+PGPASSWORD=$NEW_DB_ADMIN_PW psql  -h $NEW_DB_HOST -p $NEW_DB_HOST_PORT -U $NEW_DB_ADMIN_USER $NEW_AWX_DB_NAME < $DB_DUMP_FILE
 
 if [ $? != 0 ]; then
     echo "There was a problem importing the database."
