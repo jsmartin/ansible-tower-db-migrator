@@ -97,9 +97,9 @@ fi
 if [ ! -n "$OLD_AWX_DB_PW" ]; then
     while true
         do
-            read -s -p "Enter old AWX DB user password: " password
+            read -s -p "Enter old Tower DB user password: " password
             echo
-            read -s -p "Enter old AWX DB user password (again): " password2
+            read -s -p "Enter old Tower DB user password (again): " password2
             echo
             [ "$password" = "$password2" ] && break
             echo "Please try again"
@@ -132,9 +132,9 @@ promptNewSettings() {
  if [ ! -n "$NEW_AWX_DB_PW" ]; then
     while true
     do
-        read -s -p "Enter new AWX DB user password: " password
+        read -s -p "Enter new Tower DB user password: " password
         echo
-        read -s -p "Enter new AWX DB user password (again): " password2
+        read -s -p "Enter new Tower DB user password (again): " password2
         echo
         [ "$password" = "$password2" ] && break
         echo "Please try again"
