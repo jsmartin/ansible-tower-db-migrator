@@ -245,14 +245,16 @@ fi
 #echo the db password is $password
 
 # stop all services but DB
-ansible localhost -m service -a "name=redis state=stopped" --connection=local -s
+
 if [[ $DISTRIBID == "Debian" ]]
 then
   ansible localhost -m service -a "name=apache2 state=stopped" --connection=local -s
   ansible localhost -m service -a "name=supervisor state=stopped" --connection=local -s
+  ansible localhost -m service -a "name=redis-server state=stopped" --connection=local -s
 else
  ansible localhost -m service -a "name=httpd state=stopped" --connection=local -s
  ansible localhost -m service -a "name=supervisord state=stopped" --connection=local -s
+ ansible localhost -m service -a "name=redis state=stopped" --connection=local -s
 fi
 
 
