@@ -1,4 +1,4 @@
-#! /bin/bash -e
+#! /bin/bash -ex
 
 vercomp () {
     if [[ $1 == $2 ]]
@@ -104,7 +104,7 @@ if [ ! -n "$OLD_AWX_DB_PW" ]; then
             [ "$password" = "$password2" ] && break
             echo "Please try again"
         done
-    OLD_AWX_DB_PW=$password
+    OLD_AWX_DB_PW="$password"
 fi
 
 }
@@ -139,7 +139,7 @@ promptNewSettings() {
         [ "$password" = "$password2" ] && break
         echo "Please try again"
     done
-   NEW_AWX_DB_PW=$password
+   NEW_AWX_DB_PW="$password"
  fi
 
 
@@ -157,7 +157,7 @@ promptNewSettings() {
         [ "$password" = "$password2" ] && break
         echo "Please try again"
     done
-   NEW_DB_ADMIN_PW=$password
+   NEW_DB_ADMIN_PW="$password"
  fi
 
 }
@@ -165,7 +165,7 @@ promptNewSettings() {
 detectRequirements () {
 
 echo "Checking writing permission for $DB_CONFIG"
-if [ ! -w $DB_CONFIG ]; then
+if [ ! -w "$DB_CONFIG" ]; then
     echo "You must run the script with a user who has write permission to"
     echo $DB_CONFIG
     exit 1
@@ -261,7 +261,7 @@ fi
 
 # dump the current database, could alternately write to .pgpass of operating user
 echo "Dumping the current database to $DB_DUMP_FILE"
-PGPASSWORD=$OLD_AWX_DB_PW pg_dump -h "$OLD_DB_HOST" -p $OLD_DB_HOST_PORT -U $OLD_AWX_DB_USER $OLD_AWX_DB_NAME  -f $DB_DUMP_FILE --no-acl --no-owner 
+PGPASSWORD="$OLD_AWX_DB_PW" pg_dump -h "$OLD_DB_HOST" -p "$OLD_DB_HOST_PORT" -U "$OLD_AWX_DB_USER" "$OLD_AWX_DB_NAME"  -f "$DB_DUMP_FILE" --no-acl --no-owner 
 
 if [ $? != 0 ]; then
     echo "There was a problem dumping the database."
@@ -277,7 +277,7 @@ ansible localhost -m postgresql_user -a "name=$NEW_AWX_DB_USER password=$NEW_AWX
 
 
 echo "Now going to import the database to the new location"
-PGPASSWORD=$NEW_DB_ADMIN_PW psql  -h $NEW_DB_HOST -p $NEW_DB_HOST_PORT -U $NEW_DB_ADMIN_USER $NEW_AWX_DB_NAME -f $DB_DUMP_FILE
+PGPASSWORD="$NEW_DB_ADMIN_PW" psql  -h "$NEW_DB_HOST" -p "$NEW_DB_HOST_PORT" -U "$NEW_DB_ADMIN_USER" "$NEW_AWX_DB_NAME" -f "$DB_DUMP_FILE"
 
 if [ $? != 0 ]; then
     echo "There was a problem importing the database."
@@ -286,10 +286,10 @@ fi
 
 # Modifying the owner of the tables to the awx user because RDS rds_superuser is not
 # able to REASSIGN (not a real superuser)
-sql=$(PGPASSWORD=$NEW_DB_ADMIN_PW psql -h $NEW_DB_HOST -p $NEW_DB_HOST_PORT -U $NEW_DB_ADMIN_USER -qAt -c "SELECT 'ALTER TABLE '|| schemaname || '.' || tablename ||' OWNER TO $NEW_AWX_DB_USER;' FROM pg_tables WHERE NOT schemaname IN ('pg_catalog', 'information_schema') ORDER BY schemaname, tablename;" $NEW_AWX_DB_NAME) 
+sql=$(PGPASSWORD="$NEW_DB_ADMIN_PW" psql -h "$NEW_DB_HOST" -p "$NEW_DB_HOST_PORT" -U "$NEW_DB_ADMIN_USER" -qAt -c "SELECT 'ALTER TABLE '|| schemaname || '.' || tablename ||' OWNER TO $NEW_AWX_DB_USER;' FROM pg_tables WHERE NOT schemaname IN ('pg_catalog', 'information_schema') ORDER BY schemaname, tablename;" $NEW_AWX_DB_NAME) 
 
 echo "Fixing table ownership"
-PGPASSWORD=$NEW_DB_ADMIN_PW psql -h $NEW_DB_HOST -p $NEW_DB_HOST_PORT -U $NEW_DB_ADMIN_USER  -c "$sql" awx
+PGPASSWORD="$NEW_DB_ADMIN_PW" psql -h "$NEW_DB_HOST" -p "$NEW_DB_HOST_PORT" -U "$NEW_DB_ADMIN_USER"  -c "$sql" awx
 
 echo "backing up configuration file"
 cp /etc/tower/conf.d/postgres.py /etc/tower/conf.d/postgres.py.pre-migrate.$(date +"%s")
