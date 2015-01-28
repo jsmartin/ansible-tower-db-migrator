@@ -1,4 +1,4 @@
-#! /bin/bash -ex
+#! /bin/bash -e
 
 vercomp () {
     if [[ $1 == $2 ]]
@@ -70,20 +70,26 @@ OLD_AWX_DB_USER=$(fetchPyValue USER)
 
 # get the current db host
 OLD_DB_HOST=$(fetchPyValue HOST)
+if [ "$OLD_DB_HOST" == "" ]; then
+    OLD_DB_HOST=localhost
+fi
 
 # get the current db port
 OLD_DB_HOST_PORT=$(fetchPyValue PORT)
+if [ "$OLD_DB_HOST_PORT" == "" ]; then
+    OLD_DB_HOST_PORT=5432
+fi
 
 }
 
 promptOldSettings() {
 
 if [ ! -n "$OLD_DB_HOST" ]; then
-    read -p "Enter old DB host: " OLD_DB_HOST
+    read -p "Enter old DB host: " -e localhost OLD_DB_HOST
 fi
 
 if [ ! -n "$OLD_DB_HOST_PORT" ]; then
-    read -p "Enter OLD DB host port: " -e -i 5432 OLD_DB_HOST_PORT
+    read -p "Enter old DB host port: " -e -i 5432 OLD_DB_HOST_PORT
 fi
 
 if [ ! -n "$OLD_AWX_DB_NAME" ]; then
@@ -117,7 +123,7 @@ promptNewSettings() {
  fi
 
  if [ ! -n "$NEW_DB_HOST_PORT" ]; then
-   read -p "Enter NEW DB host port: " -e -i 5432 NEW_DB_HOST_PORT
+   read -p "Enter new DB host port: " -e -i 5432 NEW_DB_HOST_PORT
  fi
 
  if [ ! -n "$NEW_AWX_DB_NAME" ]; then
@@ -248,16 +254,18 @@ fi
 
 if [[ $DISTRIBID == "Debian" ]]
 then
-  ansible localhost -m service -a "name=apache2 state=stopped" --connection=local -s
-  ansible localhost -m service -a "name=supervisor state=stopped" --connection=local -s
-  ansible localhost -m service -a "name=redis-server state=stopped" --connection=local -s
+
+  TOWER_CONFIG=/etc/default/ansible-tower
+  TOWER_SERVICES="apache2 supervisor redis-server"
+
 else
- ansible localhost -m service -a "name=httpd state=stopped" --connection=local -s
- ansible localhost -m service -a "name=supervisord state=stopped" --connection=local -s
- ansible localhost -m service -a "name=redis state=stopped" --connection=local -s
+ TOWER_SERVICES="httpd supervisord redis"
+ TOWER_CONFIG=/etc/sysconfig/ansible-tower
 fi
 
-
+for SERVICE in $TOWER_SERVICES; do
+ansible localhost -m service -a "name=$SERVICE state=stopped" --connection=local -s
+done
 
 # dump the current database, could alternately write to .pgpass of operating user
 echo "Dumping the current database to $DB_DUMP_FILE"
@@ -324,11 +332,19 @@ if len(sys.argv) >= 2 and sys.argv[1] == 'test':
     }
 EOF
 
+
+cat << EOF > $TOWER_CONFIG
+# The settings in this file are used by the service ansible-tower.
+
+# List of services managed by Ansible Tower (space-delimited).
+TOWER_SERVICES="$TOWER_SERVICES"
+EOF
+
+echo "Stopping and disabling postgresql"
+ansible localhost -m service -a "name=postgresql state=stopped enabled=no" --connection=local -s
+
+
 echo "Starting Tower"
 ansible localhost -m service -a "name=ansible-tower state=started" --connection=local -s
-
-
-
-
 
 
